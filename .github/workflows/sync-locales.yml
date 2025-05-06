@@ -1,0 +1,56 @@
+name: Sync config/locales to repo2
+
+on:
+  pull_request:
+    paths:
+      - 'config/locales/**'
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sync-to-repo2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo1
+        uses: actions/checkout@v4
+
+      - name: Copy locales folder
+        run: |
+          mkdir sync-folder
+          cp -r config/locales/* sync-folder/
+
+      - name: Clone repo2
+        env:
+          PAT: ${{ secrets.REPO2_PAT }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git clone https://$PAT@github.com/katpadi/repo2.git repo2
+          cd repo2
+
+          # Make sync branch (optional; or push to main directly)
+          git checkout -B sync-locales-from-repo1
+
+          # Clean root and copy in new content
+          rm -rf *
+          cp -r ../sync-folder/* .
+
+          # Commit if anything changed
+          if [[ `git status --porcelain` ]]; then
+            git add .
+            git commit -m "Sync locales from repo1 PR #${{ github.event.pull_request.number }}"
+            git push --force origin sync-locales-from-repo1
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Create PR on repo2
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.REPO2_PAT }}
+          commit-message: Sync locales from repo1
+          branch: sync-locales-from-repo1
+          title: "Sync locales from repo1 PR #${{ github.event.pull_request.number }}"
+          body: |
+            This PR syncs `config/locales/` from [repo1 PR #${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }}).
