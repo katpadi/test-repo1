@@ -3,7 +3,7 @@ name: Sync config/locales to repo2
 on:
   push:
     branches:
-      - main
+      - main  # Trigger only when changes are pushed to the main branch
     paths:
       - 'config/locales/**'  # Trigger only when files in this path are changed
 
@@ -17,7 +17,7 @@ jobs:
 
       - name: Create a local branch
         run: git checkout -b temp-sync-branch
-        
+
       - name: Copy locales folder
         run: |
           mkdir sync-folder
@@ -29,18 +29,18 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git clone https://$PAT@github.com/katpadi/test-repo2.git repo2
           cd repo2
-
-          # Make sync branch (optional; or push to main directly)
+          
+          # Fetch all branches and check out the sync branch
+          git fetch --all
           git checkout -B sync-locales-from-repo1
-
-          # Clean root and copy in new content
+          
+          # Clean the root and copy in the new content
           rm -rf *
           cp -r ../sync-folder/* .
 
-          # Commit if anything changed
+          # Commit if there are changes
           if [[ `git status --porcelain` ]]; then
             git add .
             git commit -m "Sync locales from repo1 PR #${{ github.event.pull_request.number }}"
