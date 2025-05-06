@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'config/locales/**'  # Only trigger when these files change
+      - 'config/locales/**'  # Trigger only when these files change
 
 jobs:
   sync-to-repo2:
@@ -27,19 +27,22 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Clone repo2 outside of the current repo to avoid nested git repo issues
+          # Save source path before leaving workspace
+          SRC_DIR=$GITHUB_WORKSPACE/sync-folder
+
+          # Move out and clone repo2
           cd ..
           git clone https://$PAT@github.com/katpadi/test-repo2.git repo2
           cd repo2
 
-          # Create or switch to sync branch
+          # Create or switch to the sync branch
           git checkout -B sync-locales-from-repo1
 
           # Clean all files except .git
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
-          # Copy synced files from repo1
-          cp -r ../repo1/sync-folder/* .
+          # Copy from repo1
+          cp -r "$SRC_DIR"/* .
 
           # Commit and push if there are changes
           if [[ $(git status --porcelain) ]]; then
@@ -59,4 +62,4 @@ jobs:
           base: main
           title: "Sync locales from repo1"
           body: |
-            This PR syncs `config/locales/` from repo1 (main branch).
+            This PR syncs `config/locales/` from repo1's `main` branch.
