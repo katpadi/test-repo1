@@ -37,8 +37,8 @@ jobs:
           # Fetch all remote branches to ensure we have temp-sync-branch available
           git fetch --all
           
-          # Check out or create the temp-sync-branch
-          git checkout -B temp-sync-branch
+          # Check out or create the sync branch (can be any name other than temp-sync-branch)
+          git checkout -B sync-locales-from-repo1
 
           # Clean the root and copy in the new content
           rm -rf *
@@ -48,7 +48,7 @@ jobs:
           if [[ `git status --porcelain` ]]; then
             git add .
             git commit -m "Sync locales from repo1 PR #${{ github.event.pull_request.number }}"
-            git push --force origin temp-sync-branch
+            git push --force origin sync-locales-from-repo1
           else
             echo "No changes to commit"
           fi
@@ -58,7 +58,8 @@ jobs:
         with:
           token: ${{ secrets.REPO2_PAT }}
           commit-message: Sync locales from repo1
-          branch: temp-sync-branch
+          branch: sync-locales-from-repo1  # PR from this branch
+          base: main  # Target the 'main' branch in repo2
           title: "Sync locales from repo1 PR #${{ github.event.pull_request.number }}"
           body: |
             This PR syncs `config/locales/` from [repo1 PR #${{ github.event.pull_request.number }}](${{ github.event.pull_request.html_url }}).
