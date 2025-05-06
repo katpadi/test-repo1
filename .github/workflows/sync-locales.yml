@@ -1,10 +1,11 @@
 name: Sync config/locales to repo2
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
-      - 'config/locales/**'
-    types: [opened, synchronize, reopened]
+      - 'config/locales/**'  # Trigger only when files in this path are changed
 
 jobs:
   sync-to-repo2:
@@ -14,6 +15,9 @@ jobs:
       - name: Checkout repo1
         uses: actions/checkout@v4
 
+      - name: Create a local branch
+        run: git checkout -b temp-sync-branch
+        
       - name: Copy locales folder
         run: |
           mkdir sync-folder
